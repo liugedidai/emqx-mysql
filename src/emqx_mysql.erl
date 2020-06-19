@@ -13,7 +13,7 @@
 -define(CLIENT_DISCONNECTED_SQL,
                  <<"update mqtt_client set state = ?, offline_at "
                    "= now() where clientid = ?">>).
--export([load_hook/1, unload_hook/0, on_message_publish/2]).
+-export([load_hook/1, unload_hook/0, on_message_publish/2,on_client_connected/3,on_client_disconnected/4]).
 
 
 load_hook(Env) ->
