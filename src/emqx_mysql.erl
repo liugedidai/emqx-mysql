@@ -15,15 +15,17 @@
                    "= now() where clientid = ?">>).
 -export([load_hook/1, unload_hook/0, on_message_publish/2, on_client_connected/3, on_client_disconnected/4]).
 
+load(Env) ->
+    emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
+    emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}).
+unload() ->
+    emqx:unhook('client.connected',    {?MODULE, on_client_connected}),
+    emqx:unhook('client.disconnected', {?MODULE, on_client_disconnected}).
 
 load_hook(Env) ->
-	emqx:hook('client.connected',    {?MODULE, on_client_connected/3, [Env]}),
-    	emqx:hook('client.disconnected', {?MODULE, on_client_disconnected/4, [Env]}),
 	emqx:hook('message.publish', fun ?MODULE:on_message_publish/2, [Env]).
 
 unload_hook() ->
-	emqx:unhook('client.connected',    {?MODULE, on_client_connected/3}),
-    	emqx:unhook('client.disconnected', {?MODULE, on_client_disconnected/4}),
 	emqx:unhook('message.publish', fun ?MODULE:on_message_publish/2).
 
 on_client_connected(ClientInfo = #{clientid := ClientId, peerhost := Peerhost}, ConnInfo, _Env) ->
