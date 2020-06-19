@@ -27,11 +27,11 @@ unload_hook() ->
 	emqx:unhook('message.publish', fun ?MODULE:on_message_publish/2).
 
 on_client_connected(ClientInfo = #{clientid := ClientId, peerhost := Peerhost}, ConnInfo, _Env) ->
-    buildrun_emqx_backend_mysql_cli:query(?CLIENT_CONNECTED_SQL, [binary_to_list(ClientId),null,tuple_to_list(Peerhost),null]),
+    emqx_mysql_cli:query(?CLIENT_CONNECTED_SQL, [binary_to_list(ClientId),null,tuple_to_list(Peerhost),null]),
     ok.
 
 on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInfo, _Env) ->
-    buildrun_emqx_backend_mysql_cli:query(?CLIENT_DISCONNECTED_SQL, [null,binary_to_list(ClientId)]),
+    emqx_mysql_cli:query(?CLIENT_DISCONNECTED_SQL, [null,binary_to_list(ClientId)]),
     ok.
 
 
