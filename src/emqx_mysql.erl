@@ -22,8 +22,8 @@ load_hook(Env) ->
 	emqx:hook('message.publish', fun ?MODULE:on_message_publish/2, [Env]).
 
 unload_hook() ->
-	emqx:hook('client.connected',    {?MODULE, on_client_connected/3, [Env]}),
-    	emqx:hook('client.disconnected', {?MODULE, on_client_disconnected/4, [Env]}),
+	emqx:hook('client.connected',    {?MODULE, on_client_connected/3}),
+    	emqx:hook('client.disconnected', {?MODULE, on_client_disconnected/4}),
 	emqx:unhook('message.publish', fun ?MODULE:on_message_publish/2).
 
 on_client_connected(ClientInfo = #{clientid := ClientId, peerhost := Peerhost}, ConnInfo, _Env) ->
