@@ -4,15 +4,36 @@
 -include_lib("emqx/include/emqx.hrl").
 
 -define(SAVE_MESSAGE_PUBLISH, <<"INSERT INTO mqtt_msg(`mid`, `client_id`, `topic`, `payload`, `time`) VALUE(?, ?, ?, ?, ?);">>).
-
+-define(CLIENT_CONNECTED_SQL,
+    <<"insert into mqtt_client(clientid, state, "
+                   "node, online_at, offline_at) values(?, "
+                   "?, ?, now(), null) on duplicate key "
+                   "update state = null, node = ?, online_at "
+                   "= now(), offline_at = null">>).
+-define(CLIENT_DISCONNECTED_SQL,
+                 <<"update mqtt_client set state = ?, offline_at "
+                   "= now() where clientid = ?">>).
 -export([load_hook/1, unload_hook/0, on_message_publish/2]).
 
 
 load_hook(Env) ->
+	emqx:hook('client.connected', fun ?MODULE, on_client_connected/3, [Env]),
+    	emqx:hook('client.disconnected', fun ?MODULE, on_client_disconnected/4, [Env]),
 	emqx:hook('message.publish', fun ?MODULE:on_message_publish/2, [Env]).
 
 unload_hook() ->
+	emqx:unhook('client.connected', fun ?MODULE, on_client_connected/3),
+    	emqx:unhook('client.disconnected', fun ?MODULE, on_client_disconnected/4),
 	emqx:unhook('message.publish', fun ?MODULE:on_message_publish/2).
+
+on_client_connected(ClientInfo = #{clientid := ClientId, peerhost := Peerhost}, ConnInfo, _Env) ->
+    buildrun_emqx_backend_mysql_cli:query(?CLIENT_CONNECTED_SQL, [binary_to_list(ClientId),null,tuple_to_list(Peerhost),null]),
+    ok.
+
+on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInfo, _Env) ->
+    buildrun_emqx_backend_mysql_cli:query(?CLIENT_DISCONNECTED_SQL, [null,binary_to_list(ClientId)]),
+    ok.
+
 
 on_message_publish(#message{from = emqx_sys} = Message, _State) ->
 	{ok, Message};
